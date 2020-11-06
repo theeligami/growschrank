@@ -1,0 +1,7 @@
+.pio
+kicad/gerber.zip
+kicad/*.gbr
+kicad/*.grbjob
+kicad/*.drl
+kicad/*.sch-bak
+kicad/*.kicad_pcb-bak
