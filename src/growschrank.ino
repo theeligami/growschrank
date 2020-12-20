@@ -33,6 +33,8 @@
 // OLED
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 32
+#define CONTRAST 0
+
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire);
 
 // DS3231
@@ -45,7 +47,7 @@ volatile int currentStateCLK = 0;
 volatile int lastStateCLK = 0;
 volatile unsigned long lastSW = 0;
 volatile boolean up = false, down = false;
-volatile boolean swPressed = 0;
+volatile boolean swPressed = false;
 
 // Menu
 String menuItem0 = "..";	// up
@@ -64,6 +66,10 @@ uint8_t pumpOn[2], pumpOff[2];
 uint8_t fanOn, fanOff;
 boolean flag = false;
 
+// Power saving
+volatile uint64_t lastAction;
+volatile boolean pwrFlag = false;
+
 void setup()
 {
   	// Start serial interface
@@ -79,7 +85,9 @@ void setup()
     	while(1);
   	}
   	display.clearDisplay();
-  	display.setTextSize(1);
+  	display.ssd1306_command(SSD1306_SETCONTRAST);
+	display.ssd1306_command(CONTRAST);
+	display.setTextSize(1);
   	display.setTextColor(WHITE);
   	display.setCursor(0, 0);
   	display.println("Booting...");
@@ -114,6 +122,8 @@ void setup()
   	// Read the initial state of CLK for rotary encoder
   	lastStateCLK = digitalRead(CLK);
 
+	lastAction = millis();
+
 	PCICR |= (1 << PCIE0);
 	PCMSK0 |= ((1 << PCINT2) | (1 << PCINT3) | (1 << PCINT4));
 
@@ -122,8 +132,19 @@ void setup()
 
 void loop()
 {
-	drawMenu();
-	readEncoder();
+	if (millis()-lastAction>=60000)
+	{
+		if (!pwrFlag)
+			pwrFlag = true;
+			display.clearDisplay();
+			display.display();
+	}
+	else
+	{
+		drawMenu();
+		readEncoder();
+	}
+
 	checkTimer(lampOn, lampOff, LAMP);
 	checkTimer(pumpOn, pumpOff, PUMP);
 	_delay_ms(1);
@@ -708,6 +729,9 @@ const String timeToString(uint8_t time)
 ISR(PCINT0_vect)
 {
   	cli();
+	lastAction = millis();
+	pwrFlag = false;
+
 	if (!digitalRead(SW))
 		swPressed = true;
 	else
