@@ -5,6 +5,7 @@
 #include <Wire.h>
 #include <SPI.h>
 #include <util/delay.h>
+#include <EEPROM.h>
 
 // Relais
 #define RELAIS_1 2
@@ -20,6 +21,14 @@
 #define SW  10
 #define CLK  11
 #define DT  12
+
+// EEPROM
+#define	LAMP_ON_ADR		0
+#define LAMP_OFF_ADR	16
+#define PUMP_ON_ADR		32
+#define PUMP_OFF_ADR	48
+#define FAN_ON_ADR		64
+#define FAN_OFF_ADR		72
 
 // OLED
 #define SCREEN_WIDTH 128
@@ -40,7 +49,7 @@ volatile boolean swPressed = 0;
 
 // Menu
 String menuItem0 = "..";	// up
-String menuItem1 = "Time";
+String menuItem1 = "Clock";
 String menuItem2 = "Lamp ON/OFF";
 String menuItem3 = "Pump ON/OFF";
 String menuItem4 = "Fan ON/OFF";
@@ -49,13 +58,14 @@ uint8_t subMenuItem = 0;
 uint8_t timeItem = 0;
 uint8_t frame = 0;
 uint8_t page = 0;
-uint8_t time[2] = {0, 0};
+uint8_t time[2] = {0,0};
 uint8_t lampOn[2] = {0,0};
 uint8_t lampOff[2] = {0,0};
 uint8_t pumpOn[2] = {0,0};
 uint8_t pumpOff[2] = {0,0};
 uint8_t fanOn = 70;
 uint8_t fanOff = 50;
+boolean flag = false;
 
 void setup()
 {
@@ -111,11 +121,12 @@ void loop()
 	readEncoder();
 }
 
+// Draws the menu to the screen
 void drawMenu()
 {
-	if (page==0)
+	if (page==0)	// Main menu
 		displayMainMenuPage();
-	else if (page==1)
+	else if (page==1)	// Settings selection menu
 	{
 		display.setTextSize(1);
 		display.clearDisplay();
@@ -152,19 +163,44 @@ void drawMenu()
 		}
 		display.display();
 	}
-	else if (page==2 && menuItem==1)
+	else if (page==2 && menuItem==1)	// Clock
 		displayClockMenuPage(menuItem1, time);
-	else if (page==2 && menuItem==2)
+	else if (page==2 && menuItem==2)	// Lamp time
+	{
+		if (!flag)
+		{
+			flag = true;
+			EEPROM.get(LAMP_ON_ADR, lampOn);
+			EEPROM.get(LAMP_OFF_ADR, lampOff);
+		}
 		displayTimerMenuPage(menuItem2, lampOn, lampOff);
-	else if (page==2 && menuItem==3)
+	}
+	else if (page==2 && menuItem==3)	// Pump time
+	{
+		if (!flag)
+		{
+			flag = true;
+			EEPROM.get(PUMP_ON_ADR, pumpOn);
+			EEPROM.get(PUMP_OFF_ADR, pumpOff);
+		}
 		displayTimerMenuPage(menuItem3, pumpOn, pumpOff);
-	else if (page==2 && menuItem==4)
+	}
+	else if (page==2 && menuItem==4)	// Fan controller
+	{
+		if (!flag)
+		{
+			flag = true;
+			EEPROM.get(FAN_ON_ADR, fanOn);
+			EEPROM.get(FAN_OFF_ADR, fanOff);
+		}
 		displayOnOffControllerMenuPage(menuItem4, fanOn, fanOff);
+	}
 }
 
+// Handles encoder input
 void readEncoder()
 {
-	if (up)
+	if (up)		// Encoder turned UP
 	{
 		up = false;
 		if (page==1)
@@ -271,10 +307,21 @@ void readEncoder()
 					}
 				}
 			}
+			else if (menuItem==4)
+			{
+				if (subMenuItem==0)
+				{
+					if (fanOn>71)
+						--fanOn;
+				}
+				else
+					if (fanOff>0)
+						--fanOff;
+			}
 		}
 
 	}
-	else if (down)
+	else if (down)	// Encoder turned DOWN
 	{
 		down = false;
 		if (page==1)
@@ -381,9 +428,20 @@ void readEncoder()
 					}
 				}
 			}
+			else if (menuItem==4)
+			{
+				if (subMenuItem==0)
+				{
+					if (fanOn<100)
+						++fanOn;
+				}
+				else
+					if (fanOff<70)
+						++fanOff;
+			}
 		}
 	}
-	else if (swPressed)
+	else if (swPressed)	// Encoder switch pressed
 	{
 		swPressed = false;
 		if (page==0)
@@ -432,10 +490,34 @@ void readEncoder()
 						++timeItem;
 					else if (timeItem==1)
 					{
+						if (menuItem==2)
+						{
+							EEPROM.put(LAMP_ON_ADR, lampOn);
+							EEPROM.put(LAMP_OFF_ADR, lampOff);
+						}
+						else
+						{
+							EEPROM.put(PUMP_ON_ADR, pumpOn);
+							EEPROM.put(PUMP_OFF_ADR, pumpOff);
+						}
 						timeItem = 0;
 						subMenuItem = 0;
 						page = 1;
+						flag = false;
 					}
+				}
+			}
+			else if (menuItem==4)
+			{
+				if (subMenuItem==0)
+					++subMenuItem;
+				else 
+				{
+					EEPROM.put(FAN_ON_ADR, fanOn);
+					EEPROM.put(FAN_OFF_ADR, fanOff);
+					subMenuItem = 0;
+					page = 1;
+					flag = false;
 				}
 			}
 		}
@@ -462,7 +544,7 @@ void displayTimerMenuPage(String menuItem, uint8_t onTime[2], uint8_t offTime[2]
 	display.print(menuItem); display.drawFastHLine(0, 10, SCREEN_WIDTH, WHITE);
 	display.setCursor(0, 15);
 
-	if (subMenuItem==0)
+	if (subMenuItem==0)	// On time
 	{
 		display.setTextColor(WHITE, BLACK);
 		display.print("On:  ");
@@ -489,7 +571,7 @@ void displayTimerMenuPage(String menuItem, uint8_t onTime[2], uint8_t offTime[2]
 		display.print(':');
 		display.println(timeToString(offTime[1]));
 	}
-	else if (subMenuItem==1)
+	else if (subMenuItem==1)	// Off time
 	{
 		display.setTextColor(WHITE, BLACK);
 		display.print("On:  ");
@@ -528,7 +610,7 @@ void displayClockMenuPage(String menuItem, uint8_t time[2])
 	display.drawFastHLine(0, 10, SCREEN_WIDTH, WHITE);
 	display.setTextSize(2);
 	display.setCursor(0, 15);
-	if (timeItem==0)
+	if (timeItem==0)	// Hour
 	{
 		display.setTextColor(BLACK, WHITE);
 		display.print(timeToString(time[0]));
@@ -537,7 +619,7 @@ void displayClockMenuPage(String menuItem, uint8_t time[2])
 		display.print(":");
 		display.print(timeToString(time[1]));
 	}
-	else
+	else	// Minute
 	{
 		display.setTextColor(WHITE, BLACK);
 		display.print(timeToString(time[0]));
@@ -546,8 +628,6 @@ void displayClockMenuPage(String menuItem, uint8_t time[2])
 		display.setTextColor(BLACK, WHITE);
 		display.print(timeToString(time[1]));
 	}
-
-//	display.print(timeToString(time));
 	display.display();
 }
 
@@ -560,7 +640,7 @@ void displayOnOffControllerMenuPage(String menuItem, uint8_t onValue, uint8_t of
 	display.print(menuItem);
 	display.drawFastHLine(0, 10, SCREEN_WIDTH, WHITE);
 	display.setCursor(0, 15);
-	if (subMenuItem==0)
+	if (subMenuItem==0) // On condition
 	{
 		display.setTextColor(BLACK, WHITE);
 		display.print("On:  ");
@@ -570,7 +650,7 @@ void displayOnOffControllerMenuPage(String menuItem, uint8_t onValue, uint8_t of
 		display.print("Off: ");
 		display.println(offValue);
 	}
-	else if (subMenuItem==1)
+	else if (subMenuItem==1) // Off condition
 	{
 		display.print("On:  ");
 		display.println(onValue);
