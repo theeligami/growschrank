@@ -8,14 +8,14 @@
 #include <EEPROM.h>
 
 // Relais
-#define RELAIS_1 2
-#define RELAIS_2 3
+#define LAMP 2
+#define PUMP 3
 #define RELAIS_3 4
 #define RELAIS_4 5
 #define RELAIS_5 6
 #define RELAIS_6 7
 #define RELAIS_7 8
-#define RELAIS_8 9
+#define FAN 9
 
 // Rotary Encoder
 #define SW  10
@@ -59,12 +59,9 @@ uint8_t timeItem = 0;
 uint8_t frame = 0;
 uint8_t page = 0;
 uint8_t time[2] = {0,0};
-uint8_t lampOn[2] = {0,0};
-uint8_t lampOff[2] = {0,0};
-uint8_t pumpOn[2] = {0,0};
-uint8_t pumpOff[2] = {0,0};
-uint8_t fanOn = 70;
-uint8_t fanOff = 50;
+uint8_t lampOn[2], lampOff[2];
+uint8_t pumpOn[2], pumpOff[2];
+uint8_t fanOn, fanOff;
 boolean flag = false;
 
 void setup()
@@ -92,18 +89,26 @@ void setup()
   	// Set clock to 24h
   	Clock.setClockMode(false);
 	
+	// Get EEPROM values
+	EEPROM.get(LAMP_ON_ADR, lampOn);
+	EEPROM.get(LAMP_OFF_ADR, lampOff);
+	EEPROM.get(PUMP_ON_ADR, pumpOn);
+	EEPROM.get(PUMP_OFF_ADR, pumpOff);
+	EEPROM.get(FAN_ON_ADR, fanOn);
+	EEPROM.get(FAN_OFF_ADR, fanOff);
+
 	// Pin modes
 	pinMode(CLK, INPUT_PULLUP);
   	pinMode(DT, INPUT_PULLUP);
   	pinMode(SW, INPUT_PULLUP);
-  	pinMode(RELAIS_1, OUTPUT);
-  	pinMode(RELAIS_2, OUTPUT);
+  	pinMode(LAMP, OUTPUT);
+  	pinMode(PUMP, OUTPUT);
   	pinMode(RELAIS_3, OUTPUT);
   	pinMode(RELAIS_4, OUTPUT);
   	pinMode(RELAIS_5, OUTPUT);
   	pinMode(RELAIS_6, OUTPUT);
   	pinMode(RELAIS_7, OUTPUT);
-  	pinMode(RELAIS_8, OUTPUT);
+  	pinMode(FAN, OUTPUT);
   
 
   	// Read the initial state of CLK for rotary encoder
@@ -119,6 +124,9 @@ void loop()
 {
 	drawMenu();
 	readEncoder();
+	checkTimer(lampOn, lampOff, LAMP);
+	checkTimer(pumpOn, pumpOff, PUMP);
+	_delay_ms(1);
 }
 
 // Draws the menu to the screen
@@ -664,13 +672,30 @@ void displayOnOffControllerMenuPage(String menuItem, uint8_t onValue, uint8_t of
 
 void displayMainMenuPage()
 {
-	display.setTextSize(1);
+	display.setTextSize(2);
 	display.clearDisplay();
-	display.setCursor(0, 0);
+	display.setCursor(35, 0);
 	display.print(timeToString(RTC.now().hour()));
 	display.print(':');
 	display.println((timeToString(RTC.now().minute())));
+
 	display.display();
+}
+
+void checkTimer(uint8_t on[2], uint8_t off[2], uint8_t pin)
+{
+	if (on[0]==RTC.now().hour() && on[1]==RTC.now().minute())
+		digitalWrite(pin, HIGH);
+	else if (off[0]==RTC.now().hour() && off[1]==RTC.now().minute())
+		digitalWrite(pin, LOW);
+}
+
+void checkOnOffController(uint8_t on, uint8_t off, uint8_t value, uint8_t pin)
+{	
+	if (value>=on)
+		digitalWrite(pin, HIGH);
+	else if (value<=off)
+		digitalWrite(pin, LOW);
 }
 
 const String timeToString(uint8_t time)
