@@ -1,11 +1,13 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
+#include <Adafruit_Sensor.h>
+#include <Adafruit_BME280.h>
 #include <avr/sleep.h>
 #include <DS3231.h>
+#include <EEPROM.h>
 #include <Wire.h>
 #include <SPI.h>
 #include <util/delay.h>
-#include <EEPROM.h>
 
 // Relais
 #define LAMP 2
@@ -40,6 +42,9 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire);
 // DS3231
 DS3231 Clock;
 RTClib RTC;
+
+// BME280
+Adafruit_BME280 bme;
 
 // Rotary Encoder
 volatile int counter = 0;
@@ -79,11 +84,12 @@ void setup()
   	Wire.begin();
 
   	// Set display
-  	if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) // Address 0x3C for 128x32
+  	if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) // Address 0x3C for 128x32
   	{
-    	Serial.println(("SSD1306 allocation failed"));
+    	Serial.println("SSD1306 allocation failed");
     	while(1);
   	}
+
   	display.clearDisplay();
   	display.ssd1306_command(SSD1306_SETCONTRAST);
 	display.ssd1306_command(CONTRAST);
@@ -92,9 +98,18 @@ void setup()
   	display.setCursor(0, 0);
   	display.println("Booting...");
   	display.display();
-  	display.setTextSize(3);
-  	
-  	// Set clock to 24h
+
+	// Start BME280
+	if (!bme.begin())
+	{
+		display.print("BME280 ERROR at ");
+		display.println(bme.sensorID());
+		display.display();
+		while(!bme.begin());
+			_delay_ms(10);
+	}
+ 
+	// Set clock to 24h
   	Clock.setClockMode(false);
 	
 	// Get EEPROM values
@@ -561,7 +576,6 @@ void displayMenuItem(String item, uint8_t pos, boolean selected)
 		display.setTextColor(WHITE, BLACK);
 	display.setCursor(0, pos);
 	display.print(">"+item);
-//	display.display();
 }
 
 void displayTimerMenuPage(String menuItem, uint8_t onTime[2], uint8_t offTime[2])
@@ -699,6 +713,11 @@ void displayMainMenuPage()
 	display.print(timeToString(RTC.now().hour()));
 	display.print(':');
 	display.println((timeToString(RTC.now().minute())));
+	display.setTextSize(1);
+	display.setCursor(0, 15);
+	display.print("T: ");
+	display.print((uint8_t) bme.readTemperature());
+	display.println("C");
 
 	display.display();
 }
