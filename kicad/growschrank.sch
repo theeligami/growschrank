@@ -341,17 +341,6 @@ F 3 "~" H 750 2050 50  0001 C CNN
 	1    750  2050
 	-1   0    0    1   
 $EndComp
-$Comp
-L power:+5V #PWR08
-U 1 1 5F9B9C7E
-P 1375 1850
-F 0 "#PWR08" H 1375 1700 50  0001 C CNN
-F 1 "+5V" H 1390 2023 50  0000 C CNN
-F 2 "" H 1375 1850 50  0001 C CNN
-F 3 "" H 1375 1850 50  0001 C CNN
-	1    1375 1850
-	1    0    0    -1  
-$EndComp
 Wire Wire Line
 	950  1850 1375 1850
 $Comp
@@ -619,4 +608,15 @@ F 3 "" H 1450 2850 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 Connection ~ 1450 2850
+$Comp
+L power:+3.3V #PWR?
+U 1 1 5FE0DEDF
+P 1375 1850
+F 0 "#PWR?" H 1375 1700 50  0001 C CNN
+F 1 "+3.3V" H 1390 2023 50  0000 C CNN
+F 2 "" H 1375 1850 50  0001 C CNN
+F 3 "" H 1375 1850 50  0001 C CNN
+	1    1375 1850
+	1    0    0    -1  
+$EndComp
 $EndSCHEMATC
