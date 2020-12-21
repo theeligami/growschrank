@@ -63,7 +63,6 @@ String menuItem4 = "Fan ON/OFF";
 uint8_t menuItem = 0;
 uint8_t subMenuItem = 0;
 uint8_t timeItem = 0;
-uint8_t frame = 0;
 uint8_t page = 0;
 uint8_t time[2] = {0,0};
 uint8_t lampOn[2], lampOff[2];
@@ -100,7 +99,7 @@ void setup()
   	display.display();
 
 	// Start BME280
-	if (!bme.begin())
+/*	if (!bme.begin())
 	{
 		display.print("BME280 ERROR at ");
 		display.println(bme.sensorID());
@@ -108,7 +107,7 @@ void setup()
 		while(!bme.begin());
 			_delay_ms(10);
 	}
- 
+*/ 
 	// Set clock to 24h
   	Clock.setClockMode(false);
 	
@@ -179,28 +178,28 @@ void drawMenu()
 		display.print("Main Menu");
 		display.drawFastHLine(0, 10, SCREEN_WIDTH, WHITE);
 		
-		if (menuItem==0 && frame==0)
+		if (menuItem==0)
 		{
 			displayMenuItem(menuItem0, 15, true);
 			displayMenuItem(menuItem1, 25, false);
 		}
-		else if (menuItem==1 && frame==0)
+		else if (menuItem==1)
 		{
 			displayMenuItem(menuItem0, 15, false);
 			displayMenuItem(menuItem1, 25, true);
 		}
-		else if (menuItem==2 && frame==1)
+		else if (menuItem==2)
 		{
 			displayMenuItem(menuItem1, 15, false);	
 			displayMenuItem(menuItem2, 25, true);
 
 		}
-		else if (menuItem==3 && frame==2)
+		else if (menuItem==3)
 		{
 			displayMenuItem(menuItem2, 15, false);
 			displayMenuItem(menuItem3, 25, true);
 		}
-		else if (menuItem==4 && frame==3)
+		else if (menuItem==4)
 		{
 			displayMenuItem(menuItem3, 15, false);
 			displayMenuItem(menuItem4, 25, true);
@@ -247,327 +246,223 @@ void readEncoder()
 	if (up)		// Encoder turned UP
 	{
 		up = false;
-		if (page==1)
+		switch (page)
 		{
-			if (menuItem==2 && frame==1)
-				--frame;
-			else if (menuItem==3 && frame==2)
-				--frame;
-			else if (menuItem==4 && frame==3)
-				--frame;
-			if (menuItem > 0)
-				--menuItem;
-		}
-		else if (page==2)
-		{
-			if (menuItem==1)
+			case 1:	// Menu list
 			{
-				if (timeItem==0)
-				{
-					if (time[0]>0)
-						--time[0];
-					else
-						time[0] = 23;
-				}
-				else if (timeItem==1)
-				{
-					if (time[1]>0)
-						--time[1];
-					else
-						time[1] = 59;
-				}
+				if (menuItem > 0)
+					--menuItem;
+				break;
 			}
-			else if (menuItem==2)
+			case 2:	// Settings
 			{
-				if (subMenuItem==0)
+				switch (menuItem)
 				{
-					if (timeItem==0)
+					case 1:	// Clock
 					{
-						if (lampOn[0]>0)
-							--lampOn[0];
-						else
-							lampOn[0] = 23;
+						if (timeItem==0)
+						{
+							if (time[0]>0)
+								--time[0];
+							else
+								time[0] = 23;
+						}
+						else if (timeItem==1)
+						{
+							if (time[1]>0)
+								--time[1];
+							else
+								time[1] = 59;
+						}
+						break;
 					}
-					else
+					case 2:	// Lamp
 					{
-						if (lampOn[1]>0)
-							--lampOn[1];
+						upTimerMenu(lampOn, lampOff, subMenuItem, timeItem);
+						break;
+					}
+					case 3:	// Pump
+					{
+						upTimerMenu(pumpOn, pumpOff, subMenuItem, timeItem);
+						break;
+					}
+					case 4:	// Fan
+					{
+						if (subMenuItem==0)
+						{
+							if (fanOn>71)
+								--fanOn;
+						}
 						else
-							lampOn[1] = 59;
+							if (fanOff>0)
+								--fanOff;
+						break;
 					}
 				}
-				else
-				{
-					if (timeItem==0)
-					{
-						if (lampOff[0]>0)
-							--lampOff[0];
-						else
-							lampOff[0] = 23;
-					}
-					else
-					{
-						if (lampOff[1]>0)
-							--lampOff[1];
-						else
-							lampOff[1] = 59;
-					}
-				}
-			}
-			else if (menuItem==3)
-			{
-				if (subMenuItem==0)
-				{
-					if (timeItem==0)
-					{
-						if (pumpOn[0]>0)
-							--pumpOn[0];
-						else
-							pumpOn[0] = 23;
-					}
-					else
-					{
-						if (pumpOn[1]>0)
-							--pumpOn[1];
-						else
-							pumpOn[1] = 59;
-					}
-				}
-				else
-				{
-					if (timeItem==0)
-					{
-						if (pumpOff[0]>0)
-							--pumpOff[0];
-						else
-							pumpOff[0] = 23;
-					}
-					else
-					{
-						if (pumpOff[1]>0)
-							--pumpOff[1];
-						else
-							pumpOff[1] = 59;
-					}
-				}
-			}
-			else if (menuItem==4)
-			{
-				if (subMenuItem==0)
-				{
-					if (fanOn>71)
-						--fanOn;
-				}
-				else
-					if (fanOff>0)
-						--fanOff;
+				break;
 			}
 		}
-
 	}
 	else if (down)	// Encoder turned DOWN
 	{
 		down = false;
-		if (page==1)
+		switch (page)
 		{
-			if (menuItem==1 && frame==0)
-				++frame;
-			else if (menuItem==2 && frame==1)
-				++frame;
-			else if (menuItem==3 && frame==2)
-				++frame;
-			if (menuItem < 4)
-				++menuItem;
-		}
-		else if (page==2)
-		{
-			if (menuItem==1)
+			case 1:	// Menu list
 			{
-				if (timeItem==0)
-				{
-					if (time[0]<23)
-						++time[0];
-					else
-						time[0] = 0;
-				}
-				else if (timeItem==1)
-				{
-					if (time[1]<59)
-						++time[1];
-					else
-						time[0] = 0;
-				}
+				if (menuItem < 4)
+					++menuItem;
+				break;
 			}
-			else if (menuItem==2)
+			case 2:	// Settings
 			{
-				if (subMenuItem==0)
+				switch (menuItem)
 				{
-					if (timeItem==0)
+					case 1:	// Clock
 					{
-						if (lampOn[0]<23)
-							++lampOn[0];
-						else
-							lampOn[0] = 0;
+						if (timeItem==0)
+						{
+							if (time[0]<23)
+								++time[0];
+							else
+								time[0] = 0;
+						}
+						else if (timeItem==1)
+						{
+							if (time[1]<59)
+								++time[1];
+							else
+								time[0] = 0;
+						}
+						break;
 					}
-					else
+					case 2:	// Lamp
 					{
-						if (lampOn[1]<59)
-							++lampOn[1];
+						downTimerMenu(lampOn, lampOff, subMenuItem, timeItem);
+						break;
+					}
+					case 3:	// Pump
+					{
+						downTimerMenu(pumpOn, pumpOff, subMenuItem, timeItem);
+						break;
+					}
+					case 4:	// Fan
+					{
+						if (subMenuItem==0)
+						{
+							if (fanOn<100)
+								++fanOn;
+						}
 						else
-							lampOn[1] = 0;
+							if (fanOff<70)
+								++fanOff;
+						break;
 					}
 				}
-				else
-				{
-					if (timeItem==0)
-					{
-						if (lampOff[0]<23)
-							++lampOff[0];
-						else
-							lampOff[0] = 0;
-					}
-					else
-					{
-						if (lampOff[1]<59)
-							++lampOff[1];
-						else
-							lampOff[1] = 0;
-					}
-				}
-			}
-			else if (menuItem==3)
-			{
-				if (subMenuItem==0)
-				{
-					if (timeItem==0)
-					{
-						if (pumpOn[0]<23)
-							++pumpOn[0];
-						else
-							pumpOn[0] = 0;
-					}
-					else
-					{
-						if (pumpOn[1]<59)
-							++pumpOn[1];
-						else
-							pumpOn[1] = 0;
-					}
-				}
-				else
-				{
-					if (timeItem==0)
-					{
-						if (pumpOff[0]<23)
-							++pumpOff[0];
-						else
-							pumpOff[0] = 0;
-					}
-					else
-					{
-						if (pumpOff[1]<59)
-							++pumpOff[1];
-						else
-							pumpOff[1] = 0;
-					}
-				}
-			}
-			else if (menuItem==4)
-			{
-				if (subMenuItem==0)
-				{
-					if (fanOn<100)
-						++fanOn;
-				}
-				else
-					if (fanOff<70)
-						++fanOff;
+				break;
 			}
 		}
 	}
 	else if (swPressed)	// Encoder switch pressed
 	{
 		swPressed = false;
-		if (page==0)
-			++page;
-		else if (page==1)
-			if (menuItem==0)
-				--page;
-			else
-			{
-				if (menuItem==1)
-				{
-					time[0] = RTC.now().hour();
-					time[1] = RTC.now().minute();
-				}
-				++page;
-			}
-		else if (page==2)
+		switch (page)
 		{
-			if (menuItem==1)
+			case 0:	// Main menu
 			{
-				if (timeItem==0)
-					++timeItem;
+				++page;
+				break;
+			}
+			case 1:	// Menu list
+			{
+				if (menuItem==0)
+					--page;
 				else
 				{
-					timeItem = 0;
-					page = 1;
-					Clock.setHour(time[0]);
-					Clock.setMinute(time[1]);
-				}
-			}
-			else if (menuItem==2 || menuItem==3)
-			{
-				if (subMenuItem==0)
-				{
-					if (timeItem==0)
-						++timeItem;
-					else if (timeItem==1)
+					if (menuItem==1)
 					{
-						timeItem = 0;
-						++subMenuItem;
+						time[0] = RTC.now().hour();
+						time[1] = RTC.now().minute();
 					}
+					++page;
 				}
-				else if (subMenuItem==1)
+				break;
+			}
+			case 2:	// Settings
+			{
+				switch (menuItem)
 				{
-					if (timeItem==0)
-						++timeItem;
-					else if (timeItem==1)
+					case 1:	// Clock
 					{
-						if (menuItem==2)
-						{
-							EEPROM.put(LAMP_ON_ADR, lampOn);
-							EEPROM.put(LAMP_OFF_ADR, lampOff);
-						}
+						if (timeItem==0)
+							++timeItem;
 						else
 						{
-							EEPROM.put(PUMP_ON_ADR, pumpOn);
-							EEPROM.put(PUMP_OFF_ADR, pumpOff);
+							timeItem = 0;
+							page = 1;
+							Clock.setHour(time[0]);
+							Clock.setMinute(time[1]);
 						}
-						timeItem = 0;
-						subMenuItem = 0;
-						page = 1;
-						flag = false;
+						break;
 					}
-				}
-			}
-			else if (menuItem==4)
-			{
-				if (subMenuItem==0)
-					++subMenuItem;
-				else 
-				{
-					EEPROM.put(FAN_ON_ADR, fanOn);
-					EEPROM.put(FAN_OFF_ADR, fanOff);
-					subMenuItem = 0;
-					page = 1;
-					flag = false;
+					case 2:	// Lamp
+					case 3:	// Pump
+					{
+						if (subMenuItem==0)
+						{
+							if (timeItem==0)
+								++timeItem;
+							else if (timeItem==1)
+							{
+								timeItem = 0;
+								++subMenuItem;
+							}
+						}
+						else if (subMenuItem==1)
+						{
+							if (timeItem==0)
+								++timeItem;
+							else if (timeItem==1)
+							{
+								if (menuItem==2)
+								{
+									EEPROM.put(LAMP_ON_ADR, lampOn);
+									EEPROM.put(LAMP_OFF_ADR, lampOff);
+								}
+								else
+								{
+									EEPROM.put(PUMP_ON_ADR, pumpOn);
+									EEPROM.put(PUMP_OFF_ADR, pumpOff);
+								}
+								timeItem = 0;
+								subMenuItem = 0;
+								page = 1;
+								flag = false;
+							}
+						}
+						break;
+					}
+					case 4:	// Fan
+					{
+						if (subMenuItem==0)
+							++subMenuItem;
+						else 
+						{
+							EEPROM.put(FAN_ON_ADR, fanOn);
+							EEPROM.put(FAN_OFF_ADR, fanOff);
+							subMenuItem = 0;
+							page = 1;
+							flag = false;
+						}
+						break;
+					}
 				}
 			}
 		}
 	}
 }
 
+// Draw menu items in menu selection
 void displayMenuItem(String item, uint8_t pos, boolean selected)
 {
 	if (selected)
@@ -578,6 +473,25 @@ void displayMenuItem(String item, uint8_t pos, boolean selected)
 	display.print(">"+item);
 }
 
+// Main menu
+void displayMainMenuPage()
+{
+	display.setTextSize(2);
+	display.clearDisplay();
+	display.setCursor(35, 0);
+	display.print(timeToString(RTC.now().hour()));
+	display.print(':');
+	display.println((timeToString(RTC.now().minute())));
+	display.setTextSize(1);
+	display.setCursor(0, 15);
+	display.print("T: ");
+//	display.print((uint8_t) bme.readTemperature());
+	display.println("C");
+
+	display.display();
+}
+
+// Draw timer settings
 void displayTimerMenuPage(String menuItem, uint8_t onTime[2], uint8_t offTime[2])
 {
 	display.setTextSize(1);
@@ -601,7 +515,7 @@ void displayTimerMenuPage(String menuItem, uint8_t onTime[2], uint8_t offTime[2]
 			display.println(timeToString(onTime[1]));
 
 		}
-		else if (timeItem==1)
+		else
 		{
 			display.print(timeToString(onTime[0]));
 			display.print(':');
@@ -614,7 +528,7 @@ void displayTimerMenuPage(String menuItem, uint8_t onTime[2], uint8_t offTime[2]
 		display.print(':');
 		display.println(timeToString(offTime[1]));
 	}
-	else if (subMenuItem==1)	// Off time
+	else 
 	{
 		display.setTextColor(WHITE, BLACK);
 		display.print("On:  ");
@@ -631,7 +545,7 @@ void displayTimerMenuPage(String menuItem, uint8_t onTime[2], uint8_t offTime[2]
 			display.print(':');
 			display.println(timeToString(offTime[1]));
 		}
-		else if (timeItem==1)
+		else
 		{
 			display.setTextColor(WHITE, BLACK);
 			display.print(timeToString(offTime[0]));
@@ -643,6 +557,7 @@ void displayTimerMenuPage(String menuItem, uint8_t onTime[2], uint8_t offTime[2]
 	display.display();
 }
 
+// Draw clock settings
 void displayClockMenuPage(String menuItem, uint8_t time[2])
 {
 	display.setTextSize(1);
@@ -674,6 +589,7 @@ void displayClockMenuPage(String menuItem, uint8_t time[2])
 	display.display();
 }
 
+// Draw on-off controller settings
 void displayOnOffControllerMenuPage(String menuItem, uint8_t onValue, uint8_t offValue)
 {
 	display.setTextSize(1);
@@ -693,7 +609,7 @@ void displayOnOffControllerMenuPage(String menuItem, uint8_t onValue, uint8_t of
 		display.print("Off: ");
 		display.println(offValue);
 	}
-	else if (subMenuItem==1) // Off condition
+	else // Off condition
 	{
 		display.print("On:  ");
 		display.println(onValue);
@@ -705,23 +621,85 @@ void displayOnOffControllerMenuPage(String menuItem, uint8_t onValue, uint8_t of
 	display.display();
 }
 
-void displayMainMenuPage()
+// Handle encoder up-input for timer
+void upTimerMenu(uint8_t on[2], uint8_t off[2], uint8_t subMenu, uint8_t time)
 {
-	display.setTextSize(2);
-	display.clearDisplay();
-	display.setCursor(35, 0);
-	display.print(timeToString(RTC.now().hour()));
-	display.print(':');
-	display.println((timeToString(RTC.now().minute())));
-	display.setTextSize(1);
-	display.setCursor(0, 15);
-	display.print("T: ");
-	display.print((uint8_t) bme.readTemperature());
-	display.println("C");
-
-	display.display();
+	if (subMenu==0)
+	{
+		if (time==0)
+		{
+			if (on[0]>0)
+				--on[0];
+			else
+				on[0] = 23;
+		}
+		else
+		{
+			if (on[1]>0)
+				--on[1];
+			else
+				on[1] = 59;
+		}
+	}
+	else 
+	{
+		if (time==0)
+		{
+			if (off[0]>0)
+				--off[0];
+			else
+				off[0] = 23;
+		}
+		else
+		{
+			if (off[1]>0)
+				--off[1];
+			else
+				off[1] = 59;
+		}
+	}
 }
 
+// Handle encoder down-input for timer
+void downTimerMenu(uint8_t on[2], uint8_t off[2], uint8_t subMenu, uint8_t time)
+{
+	if (subMenu==0)
+	{
+		if (time==0)
+		{
+			if (on[0]<23)
+				++on[0];
+			else
+				on[0] = 0;
+		}
+		else
+		{
+			if (on[1]<59)
+				++on[1];
+			else
+				on[1] = 0;
+		}
+	}
+	else
+	{
+		if (time==0)
+		{
+			if (off[0]<23)
+				++off[0];
+			else
+				off[0] = 0;
+		}
+		else
+		{
+			if (off[1]<59)
+				++off[1];
+			else
+				off[1] = 0;
+		}
+	}
+}
+
+// Turns timers on and off
 void checkTimer(uint8_t on[2], uint8_t off[2], uint8_t pin)
 {
 	if (on[0]==RTC.now().hour() && on[1]==RTC.now().minute())
@@ -730,6 +708,7 @@ void checkTimer(uint8_t on[2], uint8_t off[2], uint8_t pin)
 		digitalWrite(pin, LOW);
 }
 
+// Turns on-off controllers on and off
 void checkOnOffController(uint8_t on, uint8_t off, uint8_t value, uint8_t pin)
 {	
 	if (value>=on)
@@ -738,6 +717,7 @@ void checkOnOffController(uint8_t on, uint8_t off, uint8_t value, uint8_t pin)
 		digitalWrite(pin, LOW);
 }
 
+// Convert a time (hour or minute) to a string
 const String timeToString(uint8_t time)
 {
 	static char string[2];
@@ -745,14 +725,21 @@ const String timeToString(uint8_t time)
 	return string;
 }
 
+// Encoder interrupt
 ISR(PCINT0_vect)
 {
   	cli();
 	lastAction = millis();
 	pwrFlag = false;
 
-	if (!digitalRead(SW))
-		swPressed = true;
+	if (!digitalRead(SW) && !swPressed)
+	{
+		if (millis()-lastSW>10)
+		{
+			swPressed = true;
+			lastSW = millis();
+		}
+	}
 	else
 	{
 		// Read the current state of CLK
@@ -771,7 +758,6 @@ ISR(PCINT0_vect)
 			}
     		else	// Encoder is rotating CW so increment
 			{
-				//counter ++;
 				up = false;
 				down = true;
 			}
@@ -779,6 +765,5 @@ ISR(PCINT0_vect)
 		// Remember last CLK state
 		lastStateCLK = currentStateCLK;
 	}
-	_delay_us(100);
 	sei();
 }
