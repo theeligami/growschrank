@@ -5,3 +5,4 @@ kicad/*.grbjob
 kicad/*.drl
 kicad/*.sch-bak
 kicad/*.kicad_pcb-bak
+*.swp
