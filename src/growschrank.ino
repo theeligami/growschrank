@@ -732,9 +732,9 @@ ISR(PCINT0_vect)
 	lastAction = millis();
 	pwrFlag = false;
 
-	if (!digitalRead(SW) && !swPressed)
+	if (!digitalRead(SW))
 	{
-		if (millis()-lastSW>10)
+		if (millis()-lastSW>10)	// Debounce
 		{
 			swPressed = true;
 			lastSW = millis();
