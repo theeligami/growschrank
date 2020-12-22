@@ -60,6 +60,8 @@ String menuItem1 = "Clock";
 String menuItem2 = "Lamp ON/OFF";
 String menuItem3 = "Pump ON/OFF";
 String menuItem4 = "Fan ON/OFF";
+String menuItem5 = "Manual mode";
+
 uint8_t menuItem = 0;
 uint8_t subMenuItem = 0;
 uint8_t timeItem = 0;
@@ -167,76 +169,113 @@ void loop()
 // Draws the menu to the screen
 void drawMenu()
 {
-	if (page==0)	// Main menu
-		displayMainMenuPage();
-	else if (page==1)	// Settings selection menu
+	switch (page)
 	{
-		display.setTextSize(1);
-		display.clearDisplay();
-		display.setTextColor(WHITE);
-		display.setCursor(0, 0);
-		display.print("Main Menu");
-		display.drawFastHLine(0, 10, SCREEN_WIDTH, WHITE);
-		
-		if (menuItem==0)
+		case 0:	// Main menu
 		{
-			displayMenuItem(menuItem0, 15, true);
-			displayMenuItem(menuItem1, 25, false);
+			displayMainMenuPage();
+			break;
 		}
-		else if (menuItem==1)
+		case 1:	// Settings selection menu
 		{
-			displayMenuItem(menuItem0, 15, false);
-			displayMenuItem(menuItem1, 25, true);
+			display.setTextSize(1);
+			display.clearDisplay();
+			display.setTextColor(WHITE);
+			display.setCursor(0, 0);
+			display.print("Main Menu");
+			display.drawFastHLine(0, 10, SCREEN_WIDTH, WHITE);
+			switch (menuItem)
+			{
+				case 0:
+				{
+					displayMenuItem(menuItem0, 15, true);
+					displayMenuItem(menuItem1, 25, false);
+					break;
+				}
+				case 1:
+				{
+					displayMenuItem(menuItem0, 15, false);
+					displayMenuItem(menuItem1, 25, true);
+					break;
+				}
+				case 2:
+				{
+					displayMenuItem(menuItem1, 15, false);	
+					displayMenuItem(menuItem2, 25, true);
+					break;
+				}
+				case 3:
+				{
+					displayMenuItem(menuItem2, 15, false);
+					displayMenuItem(menuItem3, 25, true);
+					break;
+				}
+				case 4:
+				{
+					displayMenuItem(menuItem3, 15, false);
+					displayMenuItem(menuItem4, 25, true);
+					break;
+				}
+				case 5:
+				{
+					displayMenuItem(menuItem4, 15, false);
+					displayMenuItem(menuItem5, 25, true);
+					break;
+				}
+			}
+			display.display();
+			break;
 		}
-		else if (menuItem==2)
+		case 2:
 		{
-			displayMenuItem(menuItem1, 15, false);	
-			displayMenuItem(menuItem2, 25, true);
-
+			switch (menuItem)
+			{
+				case 1:	// Clock
+				{
+					displayClockMenuPage(menuItem1, time);
+					break;
+				}
+				case 2:	// Lamp time
+				{
+					if (!flag)
+					{
+						flag = true;
+						EEPROM.get(LAMP_ON_ADR, lampOn);
+						EEPROM.get(LAMP_OFF_ADR, lampOff);
+					}
+					displayTimerMenuPage(menuItem2, lampOn, lampOff);
+					break;
+				}
+				case 3:	// Pump time
+				{
+					if (!flag)
+					{
+						flag = true;
+						EEPROM.get(PUMP_ON_ADR, pumpOn);
+						EEPROM.get(PUMP_OFF_ADR, pumpOff);
+					}
+					displayTimerMenuPage(menuItem3, pumpOn, pumpOff);
+					break;
+				}
+				case 4:	// Fan controller
+				{
+					if (!flag)
+					{
+						flag = true;
+						EEPROM.get(FAN_ON_ADR, fanOn);
+						EEPROM.get(FAN_OFF_ADR, fanOff);
+					}
+					displayOnOffControllerMenuPage(menuItem4, fanOn, fanOff);
+					break;
+				}
+				case 5:	// Manual control
+				{
+					displayManualControl(menuItem5);
+					break;
+				}
+			}
+			break;
 		}
-		else if (menuItem==3)
-		{
-			displayMenuItem(menuItem2, 15, false);
-			displayMenuItem(menuItem3, 25, true);
-		}
-		else if (menuItem==4)
-		{
-			displayMenuItem(menuItem3, 15, false);
-			displayMenuItem(menuItem4, 25, true);
-		}
-		display.display();
-	}
-	else if (page==2 && menuItem==1)	// Clock
-		displayClockMenuPage(menuItem1, time);
-	else if (page==2 && menuItem==2)	// Lamp time
-	{
-		if (!flag)
-		{
-			flag = true;
-			EEPROM.get(LAMP_ON_ADR, lampOn);
-			EEPROM.get(LAMP_OFF_ADR, lampOff);
-		}
-		displayTimerMenuPage(menuItem2, lampOn, lampOff);
-	}
-	else if (page==2 && menuItem==3)	// Pump time
-	{
-		if (!flag)
-		{
-			flag = true;
-			EEPROM.get(PUMP_ON_ADR, pumpOn);
-			EEPROM.get(PUMP_OFF_ADR, pumpOff);
-		}
-		displayTimerMenuPage(menuItem3, pumpOn, pumpOff);
-	}
-	else if (page==2 && menuItem==4)	// Fan controller
-	{
-		if (!flag)
-		{
-			flag = true;
-			EEPROM.get(FAN_ON_ADR, fanOn);
-			EEPROM.get(FAN_OFF_ADR, fanOff);
-		}
-		displayOnOffControllerMenuPage(menuItem4, fanOn, fanOff);
 	}
 }
 
@@ -298,6 +337,12 @@ void readEncoder()
 								--fanOff;
 						break;
 					}
+					case 5:	// Manual control
+					{
+						if (subMenuItem>0)
+							--subMenuItem;
+						break;
+					}
 				}
 				break;
 			}
@@ -310,7 +355,7 @@ void readEncoder()
 		{
 			case 1:	// Menu list
 			{
-				if (menuItem < 4)
+				if (menuItem < 5)
 					++menuItem;
 				break;
 			}
@@ -356,6 +401,12 @@ void readEncoder()
 						else
 							if (fanOff<70)
 								++fanOff;
+						break;
+					}
+					case 5:	// Manual control
+					{
+						if (subMenuItem<3)
+							++subMenuItem;
 						break;
 					}
 				}
@@ -455,6 +506,32 @@ void readEncoder()
 							flag = false;
 						}
 						break;
+					}
+					case 5: // Manual control
+					{
+						switch (subMenuItem)
+						{
+							case 0:	// Back
+							{
+								--page;
+								break;
+							}
+							case 1:	// Lamp
+							{
+								digitalWrite(LAMP, !digitalRead(LAMP));
+								break;
+							}
+							case 2:	// Pump
+							{
+								digitalWrite(PUMP, !digitalRead(PUMP));
+								break;
+							}
+							case 3:	// Fan
+							{
+								digitalWrite(FAN, !digitalRead(FAN));
+								break;
+							}
+						}
 					}
 				}
 			}
@@ -623,6 +700,47 @@ void displayOnOffControllerMenuPage(String menuItem, uint8_t onValue, uint8_t of
 		display.setTextColor(BLACK, WHITE);
 		display.print("Off: ");
 		display.println(offValue);
+	}
+	display.display();
+}
+
+// Draw manual control menu
+void displayManualControl(String menuItem)
+{
+	display.setTextSize(1);
+	display.clearDisplay();
+	display.setTextColor(WHITE);
+	display.setCursor(0, 0);
+	display.print(menuItem);
+	display.drawFastHLine(0, 10, SCREEN_WIDTH, WHITE);
+	display.setCursor(0, 15);
+	
+	switch (subMenuItem)
+	{
+		case 0:
+		{
+			displayMenuItem(menuItem0, 15, true);
+			displayMenuItem(menuItem2, 25, false);
+			break;
+		}
+		case 1:
+		{
+			displayMenuItem(menuItem2, 15, true);
+			displayMenuItem(menuItem3, 25, false);
+			break;
+		}
+		case 2:
+		{
+			displayMenuItem(menuItem3, 15, true);
+			displayMenuItem(menuItem4, 25, false);
+			break;
+		}
+		case 3:
+		{
+			displayMenuItem(menuItem3, 15, false);
+			displayMenuItem(menuItem4, 25, true);
+			break;
+		}
 	}
 	display.display();
 }
