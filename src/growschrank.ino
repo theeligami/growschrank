@@ -99,15 +99,14 @@ void setup()
   	display.display();
 
 	// Start BME280
-/*	if (!bme.begin())
+	while (!bme.begin(0x76, &Wire))
 	{
 		display.print("BME280 ERROR at ");
 		display.println(bme.sensorID());
 		display.display();
-		while(!bme.begin());
-			_delay_ms(10);
+		_delay_ms(1000);
 	}
-*/ 
+
 	// Set clock to 24h
   	Clock.setClockMode(false);
 	
@@ -161,7 +160,8 @@ void loop()
 
 	checkTimer(lampOn, lampOff, LAMP);
 	checkTimer(pumpOn, pumpOff, PUMP);
-	_delay_ms(1);
+	checkOnOffController(fanOn, fanOff, (uint8_t) bme.readHumidity(), FAN);
+	_delay_ms(10);
 }
 
 // Draws the menu to the screen
@@ -483,11 +483,17 @@ void displayMainMenuPage()
 	display.print(':');
 	display.println((timeToString(RTC.now().minute())));
 	display.setTextSize(1);
-	display.setCursor(0, 15);
-	display.print("T: ");
-//	display.print((uint8_t) bme.readTemperature());
-	display.println("C");
-
+	display.setCursor(35, 15);
+	display.print((uint8_t) bme.readTemperature());
+	display.print("C    ");
+	display.print((uint8_t) bme.readHumidity());
+	display.println("%");
+	display.print("Lamp:");
+	display.print(digitalRead(LAMP));
+	display.print(" Pump:");
+	display.print(digitalRead(PUMP));
+	display.print(" Fan:");
+	display.println(digitalRead(FAN));
 	display.display();
 }
 
