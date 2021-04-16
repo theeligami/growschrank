@@ -37,6 +37,9 @@
 #define SCREEN_HEIGHT 32
 #define CONTRAST 0
 
+#define ON LOW
+#define OFF HIGH
+
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire);
 
 // DS3231
@@ -132,7 +135,10 @@ void setup()
   	pinMode(RELAIS_6, OUTPUT);
   	pinMode(RELAIS_7, OUTPUT);
   	pinMode(FAN, OUTPUT);
-  
+
+
+	for (int i=2; i<9; i++)
+		digitalWrite(i, OFF);
 
   	// Read the initial state of CLK for rotary encoder
   	lastStateCLK = digitalRead(CLK);
@@ -566,11 +572,11 @@ void displayMainMenuPage()
 	display.print((uint8_t) bme.readHumidity());
 	display.println("%");
 	display.print("Lamp:");
-	display.print(digitalRead(LAMP));
+	display.print(!digitalRead(LAMP));
 	display.print(" Pump:");
-	display.print(digitalRead(PUMP));
+	display.print(!digitalRead(PUMP));
 	display.print(" Fan:");
-	display.println(digitalRead(FAN));
+	display.println(!digitalRead(FAN));
 	display.display();
 }
 
@@ -827,18 +833,18 @@ void downTimerMenu(uint8_t on[2], uint8_t off[2], uint8_t subMenu, uint8_t time)
 void checkTimer(uint8_t on[2], uint8_t off[2], uint8_t pin)
 {
 	if (on[0]==RTC.now().hour() && on[1]==RTC.now().minute())
-		digitalWrite(pin, HIGH);
+		digitalWrite(pin, ON);
 	else if (off[0]==RTC.now().hour() && off[1]==RTC.now().minute())
-		digitalWrite(pin, LOW);
+		digitalWrite(pin, OFF);
 }
 
 // Turns on-off controllers on and off
 void checkOnOffController(uint8_t on, uint8_t off, uint8_t value, uint8_t pin)
 {	
 	if (value>=on)
-		digitalWrite(pin, HIGH);
+		digitalWrite(pin, ON);
 	else if (value<=off)
-		digitalWrite(pin, LOW);
+		digitalWrite(pin, OFF);
 }
 
 // Convert a time (hour or minute) to a string
