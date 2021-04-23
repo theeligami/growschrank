@@ -556,6 +556,13 @@ void displayMenuItem(String item, uint8_t pos, boolean selected)
 	display.print(">"+item);
 }
 
+void displayMenuItemStatus(String item, uint8_t pos, boolean selected, uint8_t pin)
+{
+	displayMenuItem(item, pos, selected);
+	display.print(" ");
+	display.print(!digitalRead(pin));
+}
+
 // Main menu
 void displayMainMenuPage()
 {
@@ -726,25 +733,25 @@ void displayManualControl(String menuItem)
 		case 0:
 		{
 			displayMenuItem(menuItem0, 15, true);
-			displayMenuItem(menuItem2, 25, false);
+			displayMenuItemStatus(menuItem2, 25, false, LAMP);
 			break;
 		}
 		case 1:
 		{
-			displayMenuItem(menuItem2, 15, true);
-			displayMenuItem(menuItem3, 25, false);
+			displayMenuItemStatus(menuItem2, 15, true, LAMP);
+			displayMenuItemStatus(menuItem3, 25, false, PUMP);
 			break;
 		}
 		case 2:
 		{
-			displayMenuItem(menuItem3, 15, true);
-			displayMenuItem(menuItem4, 25, false);
+			displayMenuItemStatus(menuItem3, 15, true, PUMP);
+			displayMenuItemStatus(menuItem4, 25, false, FAN);
 			break;
 		}
 		case 3:
 		{
-			displayMenuItem(menuItem3, 15, false);
-			displayMenuItem(menuItem4, 25, true);
+			displayMenuItemStatus(menuItem3, 15, false, PUMP);
+			displayMenuItemStatus(menuItem4, 25, true, FAN);
 			break;
 		}
 	}
@@ -864,7 +871,7 @@ ISR(PCINT0_vect)
 
 	if (!digitalRead(SW))
 	{
-		if (millis()-lastSW>10)	// Debounce
+		if ((millis()-lastSW)>50)	// Debounce
 		{
 			swPressed = true;
 			lastSW = millis();
