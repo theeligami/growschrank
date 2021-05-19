@@ -865,42 +865,45 @@ const String timeToString(uint8_t time)
 // Encoder interrupt
 ISR(PCINT0_vect)
 {
-  	cli();
-	lastAction = millis();
-	pwrFlag = false;
-
-	if (!digitalRead(SW))
+	if (!swPressed)
 	{
-		if ((millis()-lastSW)>50)	// Debounce
+  		cli();
+		lastAction = millis();
+		pwrFlag = false;
+
+		if (!digitalRead(SW))
 		{
-			swPressed = true;
-			lastSW = millis();
+			if ((millis()-lastSW)>150)	// Debounce
+			{
+				swPressed = true;
+				lastSW = millis();
+			}
 		}
-	}
-	else
-	{
-		// Read the current state of CLK
-  		currentStateCLK = digitalRead(CLK);
-  		// If last and current state of CLK are different, then pulse occurred
-  		// React to only 1 state change to avoid double count
-  		if (currentStateCLK != lastStateCLK  && currentStateCLK == 1)
-  		{
+		else
+		{
+			// Read the current state of CLK
+  			currentStateCLK = digitalRead(CLK);
+  			// If last and current state of CLK are different, then pulse occurred
+  			// React to only 1 state change to avoid double count
+  			if (currentStateCLK != lastStateCLK  && currentStateCLK == 1)
+  			{
 
-    		// If the DT state is different than the CLK state then
-    		// the encoder is rotating CCW so decrement
-    		if (digitalRead(DT) != currentStateCLK)
-			{
-				up = true;
-				down = false;
-			}
-    		else	// Encoder is rotating CW so increment
-			{
-				up = false;
-				down = true;
-			}
-  		}
-		// Remember last CLK state
-		lastStateCLK = currentStateCLK;
+    			// If the DT state is different than the CLK state then
+    			// the encoder is rotating CCW so decrement
+    			if (digitalRead(DT) != currentStateCLK)
+				{
+					up = true;
+					down = false;
+				}
+    			else	// Encoder is rotating CW so increment
+				{
+					up = false;
+					down = true;
+				}
+  			}
+			// Remember last CLK state
+			lastStateCLK = currentStateCLK;
+		}
+		sei();
 	}
-	sei();
 }
