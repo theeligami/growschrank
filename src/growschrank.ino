@@ -854,7 +854,7 @@ void checkTimer(uint8_t on[2], uint8_t off[2], uint8_t pin, uint8_t adr)
 	else if (off[0]==RTC.now().hour() && off[1]==RTC.now().minute())
 	{
 		digitalWrite(pin, OFF);
-		EEPROM.put(adr, 1);
+		EEPROM.put(adr, 0);
 	}
 }
 
