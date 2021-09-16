@@ -138,12 +138,6 @@ void setup()
   	pinMode(RELAIS_7, OUTPUT);
   	pinMode(FAN, OUTPUT);
 
-	// Set last state of controller e.g. after blackout
-	if (EEPROM.read(LAMP_STATE_ADR))
-		digitalWrite(LAMP, ON);
-	if (EEPROM.read(PUMP_STATE_ADR))
-		digitalWrite(PUMP, ON);
-
 	for (int i=2; i<9; i++)
 		digitalWrite(i, OFF);
 
@@ -154,6 +148,12 @@ void setup()
 
 	PCICR |= (1 << PCIE0);
 	PCMSK0 |= ((1 << PCINT2) | (1 << PCINT3) | (1 << PCINT4));
+
+	// Set last state of controller e.g. after blackout
+	if (EEPROM.read(LAMP_STATE_ADR)==1)
+		digitalWrite(LAMP, ON);
+	if (EEPROM.read(PUMP_STATE_ADR)==1)
+		digitalWrite(PUMP, ON);
 
 	display.setTextSize(1);
 }
