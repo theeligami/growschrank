@@ -31,6 +31,8 @@
 #define PUMP_OFF_ADR	48
 #define FAN_ON_ADR		64
 #define FAN_OFF_ADR		72
+#define LAMP_STATE_ADR  88
+#define PUMP_STATE_ADR  104
 
 // OLED
 #define SCREEN_WIDTH 128
@@ -136,6 +138,11 @@ void setup()
   	pinMode(RELAIS_7, OUTPUT);
   	pinMode(FAN, OUTPUT);
 
+	// Set last state of controller e.g. after blackout
+	if (EEPROM.read(LAMP_STATE_ADR))
+		digitalWrite(LAMP, ON);
+	if (EEPROM.read(PUMP_STATE_ADR))
+		digitalWrite(PUMP, ON);
 
 	for (int i=2; i<9; i++)
 		digitalWrite(i, OFF);
@@ -166,8 +173,8 @@ void loop()
 		readEncoder();
 	}
 
-	checkTimer(lampOn, lampOff, LAMP);
-	checkTimer(pumpOn, pumpOff, PUMP);
+	checkTimer(lampOn, lampOff, LAMP, LAMP_STATE_ADR);
+	checkTimer(pumpOn, pumpOff, PUMP, PUMP_STATE_ADR);
 	checkOnOffController(fanOn, fanOff, (uint8_t) bme.readHumidity(), FAN);
 	_delay_ms(10);
 }
@@ -837,12 +844,18 @@ void downTimerMenu(uint8_t on[2], uint8_t off[2], uint8_t subMenu, uint8_t time)
 }
 
 // Turns timers on and off
-void checkTimer(uint8_t on[2], uint8_t off[2], uint8_t pin)
+void checkTimer(uint8_t on[2], uint8_t off[2], uint8_t pin, uint8_t adr)
 {
 	if (on[0]==RTC.now().hour() && on[1]==RTC.now().minute())
+	{
 		digitalWrite(pin, ON);
+		EEPROM.put(adr, 1);
+	}
 	else if (off[0]==RTC.now().hour() && off[1]==RTC.now().minute())
+	{
 		digitalWrite(pin, OFF);
+		EEPROM.put(adr, 1);
+	}
 }
 
 // Turns on-off controllers on and off
