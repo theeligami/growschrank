@@ -174,7 +174,7 @@ void loop()
 	}
 
 	checkTimer(lampOn, lampOff, LAMP, LAMP_STATE_ADR);
-//	checkOnOffController(fanOn, fanOff, (uint8_t) bme.readHumidity(), FAN);
+	checkOnOffController(fanOn, fanOff, (uint8_t) bme.readHumidity(), FAN);
 	_delay_ms(10);
 }
 
