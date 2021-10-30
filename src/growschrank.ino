@@ -174,8 +174,7 @@ void loop()
 	}
 
 	checkTimer(lampOn, lampOff, LAMP, LAMP_STATE_ADR);
-	checkTimer(pumpOn, pumpOff, PUMP, PUMP_STATE_ADR);
-	checkOnOffController(fanOn, fanOff, (uint8_t) bme.readHumidity(), FAN);
+//	checkOnOffController(fanOn, fanOff, (uint8_t) bme.readHumidity(), FAN);
 	_delay_ms(10);
 }
 
@@ -532,11 +531,13 @@ void readEncoder()
 							case 1:	// Lamp
 							{
 								digitalWrite(LAMP, !digitalRead(LAMP));
+								EEPROM.put(LAMP_STATE_ADR, !digitalRead(LAMP));
 								break;
 							}
 							case 2:	// Pump
 							{
 								digitalWrite(PUMP, !digitalRead(PUMP));
+								EEPROM.put(PUMP_STATE_ADR, !digitalRead(PUMP));
 								break;
 							}
 							case 3:	// Fan
